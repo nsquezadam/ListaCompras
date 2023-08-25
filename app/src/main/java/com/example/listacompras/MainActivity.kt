@@ -27,6 +27,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,20 +66,11 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             AppComprasUI()
         }
     }
 }
-
-
-
-
-
-
-
-
 @Composable
 fun AppComprasUI(){
     val contexto = LocalContext.current
@@ -90,7 +84,6 @@ fun AppComprasUI(){
             Log.v("Appcompras  ui", "Launchedffect()")
         }
     }
-
     val onSave={
         setAccion(Accion.LISTAR)
         setCompras(emptyList())
@@ -122,10 +115,7 @@ fun CompraListaUI(
             val dao = AppDataBase.getInstance(context).compraDao()
             setCompras(dao.getAll())
         }
-
     }
-
-
     Scaffold(
         floatingActionButton = { ExtendedFloatingActionButton(
             onClick = { onAdd() },
@@ -142,11 +132,9 @@ fun CompraListaUI(
             LazyColumn(modifier = Modifier.fillMaxSize()){
                 items(compras){ compra ->
                             CompraItemUI(compra){
-
                                 onEdit(compra)
                                 setCompras(emptyList<Compra>())
                             }
-
                 }
             }
         }else{
@@ -158,15 +146,9 @@ fun CompraListaUI(
             ) {
                 Text(text = "No hay Compras Guardadas")
             }
-
         }
-        
-
-    }
+        }
 }
-
-
-
 
 //@Preview(showBackground = true)
 @Composable
@@ -256,54 +238,45 @@ fun formularioCompraUI(c:Compra?, onSave:()->Unit = {}){
          val alcanceCorrutina = rememberCoroutineScope()
          val contexto = LocalContext.current
          val resources = contexto.resources
-
          Row (
              modifier= Modifier
                  .fillMaxWidth()
                  .padding(vertical = 20.dp, horizontal = 20.dp)
                  .clickable { onSave() }
-
          ) {
              if(compra.realizada){
-                 Icon(
-                     Icons.Filled.CheckCircle,
-                     contentDescription = "compra Realizada",
-                     modifier = Modifier
-                         .clickable {
-                             alcanceCorrutina.launch(Dispatchers.IO) {
-                                 val dao = AppDataBase
-                                     .getInstance(contexto)
-                                     .compraDao()
-                                 compra.realizada = false
-                                 dao.updateCompra(compra)
-
-                                 onClick()
-
-                             }
-
-                         }
-                         .size(30.dp)
+                 val checked = remember { mutableStateOf(true) }
+                 Checkbox(checked = checked.value,
+                          onCheckedChange = {checked_ ->
+                                 alcanceCorrutina.launch(Dispatchers.IO) {
+                                  val dao = AppDataBase
+                                      .getInstance(contexto)
+                                      .compraDao()
+                                     checked.value = false
+                                     compra.realizada = false
+                                  dao.updateCompra(compra)
+                                  onClick()
+                              }
+                      },
                  )
              }else{
+                 val checked = remember { mutableStateOf(false) }
+                 Checkbox(checked = checked.value,
+                          onCheckedChange = { checked_ ->
 
-                 Icon(
-                     painter = painterResource(R.drawable.lavado_en_seco),
-                     contentDescription = "compra Por hacer",
-                     modifier = Modifier
-                         .clickable {
-                             alcanceCorrutina.launch(Dispatchers.IO) {
-                                 val dao = AppDataBase
-                                     .getInstance(contexto)
-                                     .compraDao()
-                                 compra.realizada = true
-                                 dao.updateCompra(compra)
-                                 onClick()
+                              alcanceCorrutina.launch(Dispatchers.IO) {
+                              val dao = AppDataBase
+                                  .getInstance(contexto)
+                                  .compraDao()
+                              checked.value = true
+                              compra.realizada = true
+                              dao.updateCompra(compra)
+                              onClick()
+                          }},
 
-                             }
-
-                         }
-                         .size(30.dp)
                  )
+
+
 
              }
              Spacer(modifier= Modifier.width(20.dp))
@@ -319,6 +292,5 @@ fun formularioCompraUI(c:Compra?, onSave:()->Unit = {}){
 @Composable
 fun previewForm(){
     val c = Compra(1,"azucar", false)
-
     formularioCompraUI(c)
 }
